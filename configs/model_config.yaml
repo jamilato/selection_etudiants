@@ -1,0 +1,226 @@
+# Configuration des architectures de modèles
+# Projet: Reconnaissance d'Émotions Faciales
+
+# EmotionNet Nano (recommandé pour temps réel)
+emotionnet_nano:
+  description: "Architecture légère optimisée pour temps réel (>70 FPS)"
+  input_shape: [1, 48, 48]  # Grayscale 48x48
+  num_classes: 7
+
+  architecture:
+    # Stem block
+    stem:
+      in_channels: 1
+      out_channels: 32
+      kernel_size: 3
+      stride: 2
+      padding: 1
+
+    # Depthwise separable conv blocks
+    blocks:
+      - in_channels: 32
+        out_channels: 64
+        stride: 2
+
+      - in_channels: 64
+        out_channels: 128
+        stride: 2
+
+      - in_channels: 128
+        out_channels: 256
+        stride: 2
+
+    # Classifier
+    classifier:
+      dropout: 0.2
+      num_classes: 7
+
+  # Stats
+  parameters: ~300000  # ~300k params
+  flops: ~50M  # ~50M FLOPs
+  target_fps: 70  # >70 FPS sur AMD 7900 XT
+
+# EmotionNet Standard (plus profond)
+emotionnet_standard:
+  description: "Version plus profonde pour meilleure précision"
+  input_shape: [1, 48, 48]
+  num_classes: 7
+
+  architecture:
+    stem:
+      in_channels: 1
+      out_channels: 64
+      kernel_size: 3
+      stride: 2
+      padding: 1
+
+    blocks:
+      - in_channels: 64
+        out_channels: 128
+        stride: 2
+
+      - in_channels: 128
+        out_channels: 256
+        stride: 2
+
+      - in_channels: 256
+        out_channels: 512
+        stride: 2
+
+    classifier:
+      dropout: 0.3
+      num_classes: 7
+
+  parameters: ~1000000  # ~1M params
+  target_fps: 50
+
+# ResNet18 (transfer learning)
+resnet18:
+  description: "ResNet18 avec transfer learning depuis ImageNet"
+  input_shape: [3, 224, 224]  # RGB 224x224
+  num_classes: 7
+  pretrained: true  # Utiliser poids ImageNet
+
+  architecture:
+    # Modifier première couche si grayscale
+    modify_first_conv: false  # true si input grayscale
+    grayscale_input: false
+
+    # Freeze layers
+    freeze_backbone: false
+    freeze_until_layer: "layer3"  # null pour ne pas freeze
+
+    # Modifier classifier
+    classifier:
+      dropout: 0.5
+      num_classes: 7
+
+  parameters: ~11000000  # ~11M params
+  target_fps: 30
+
+# ResNet34
+resnet34:
+  description: "ResNet34 pour meilleure précision"
+  input_shape: [3, 224, 224]
+  num_classes: 7
+  pretrained: true
+
+  architecture:
+    modify_first_conv: false
+    grayscale_input: false
+    freeze_backbone: false
+    freeze_until_layer: null
+
+    classifier:
+      dropout: 0.5
+      num_classes: 7
+
+  parameters: ~21000000  # ~21M params
+  target_fps: 20
+
+# EfficientNet-B0 (bon compromis)
+efficientnet_b0:
+  description: "EfficientNet-B0 pour bon compromis précision/vitesse"
+  input_shape: [3, 224, 224]
+  num_classes: 7
+  pretrained: true
+
+  architecture:
+    freeze_backbone: false
+    dropout: 0.4
+
+    classifier:
+      num_classes: 7
+
+  parameters: ~5000000  # ~5M params
+  target_fps: 40
+
+# EfficientNet-B7 (précision maximale)
+efficientnet_b7:
+  description: "EfficientNet-B7 pour précision maximale (78.9% sur FER2013)"
+  input_shape: [3, 600, 600]
+  num_classes: 7
+  pretrained: true
+
+  architecture:
+    freeze_backbone: false
+    dropout: 0.5
+
+    classifier:
+      num_classes: 7
+
+  parameters: ~66000000  # ~66M params
+  target_fps: 10  # Plus lent
+  best_accuracy: 0.789  # État de l'art sur FER2013
+
+# VGG16 (référence)
+vgg16:
+  description: "VGG16 - Meilleur modèle selon recherches (72.7% FER2013)"
+  input_shape: [3, 224, 224]
+  num_classes: 7
+  pretrained: true
+
+  architecture:
+    batch_norm: true  # Utiliser VGG16 avec batch norm
+
+    classifier:
+      dropout: 0.5
+      num_classes: 7
+
+  parameters: ~138000000  # ~138M params
+  target_fps: 15
+  benchmark_accuracy: 0.727  # 72.7% sur FER2013
+
+# Recommandations par use case
+recommendations:
+  real_time:
+    primary: "emotionnet_nano"
+    alternative: "resnet18"
+    reason: ">70 FPS sur AMD 7900 XT"
+
+  accuracy:
+    primary: "efficientnet_b7"
+    alternative: "vgg16"
+    reason: "78.9% précision sur FER2013"
+
+  balanced:
+    primary: "resnet34"
+    alternative: "efficientnet_b0"
+    reason: "Bon compromis précision/vitesse"
+
+  low_resource:
+    primary: "emotionnet_nano"
+    reason: "Léger, rapide, <1MB"
+
+# Benchmarks (FER2013)
+benchmarks:
+  human_level: 0.65  # Humains: 65±5%
+  state_of_the_art: 0.789  # EfficientNet-B7
+  vgg16: 0.727
+  resnet: 0.724
+  inception: 0.716
+  emotionnet_expected: 0.65  # Attendu pour notre modèle
+
+# Métriques cibles
+targets:
+  fer2013:
+    minimum: 0.60  # Minimum acceptable
+    target: 0.70   # Objectif
+    excellent: 0.75  # Excellent résultat
+
+  rafdb:
+    minimum: 0.70
+    target: 0.80
+    excellent: 0.85
+
+# VRAM Usage (estimations pour batch_size=64)
+vram_usage:
+  emotionnet_nano: ~2GB
+  resnet18: ~4GB
+  resnet34: ~5GB
+  efficientnet_b0: ~6GB
+  efficientnet_b7: ~14GB
+  vgg16: ~8GB
+
+  # Votre GPU: AMD 7900 XT = 20GB VRAM
+  available: 20GB

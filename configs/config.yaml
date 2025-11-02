@@ -1,0 +1,74 @@
+# Configuration principale du système
+# Projet IA - Identification d'Étudiants avec Analyse d'Émotions
+
+# Paramètres GPU
+device:
+  type: "cuda"  # cuda pour AMD avec ROCm
+  gpu_id: 0
+  mixed_precision: true  # Utiliser FP16 pour accélération
+
+# Modèle d'émotions
+emotion_model:
+  architecture: "emotion_net_nano"  # emotion_net_nano, efficientnet_b7
+  weights_path: "models/emotion_net_nano.pt"
+  num_classes: 7
+  input_size: [48, 48]  # [hauteur, largeur]
+  grayscale: true
+
+# Détection faciale
+face_detection:
+  method: "mtcnn"  # mtcnn, haar_cascade
+  min_face_size: 40
+  confidence_threshold: 0.9
+  haar_cascade_path: "configs/haarcascade_frontalface_default.xml"
+
+# Reconnaissance d'identité
+student_recognition:
+  embeddings_db_path: "models/student_embeddings.pkl"
+  similarity_threshold: 0.6  # Cosine similarity
+  model_name: "Facenet"  # Pour DeepFace
+
+# Traitement temps réel
+realtime:
+  fps_target: 30
+  max_frames_buffer: 5
+  skip_frames: 0  # Traiter 1 frame sur N (0 = toutes)
+  show_fps: true
+  show_confidence: true
+
+# Visualisation
+visualization:
+  window_name: "Emotion Recognition System"
+  font_scale: 0.5
+  font_thickness: 2
+  box_color: [0, 255, 0]  # Vert (BGR)
+  text_color: [0, 255, 0]
+  box_thickness: 2
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  save_logs: true
+  log_dir: "logs"
+  log_detections: true
+  detection_log_path: "logs/detections.csv"
+
+# Émotions
+emotions:
+  labels: ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
+  colors:  # Couleurs BGR pour visualisation
+    angry: [0, 0, 255]
+    disgust: [0, 165, 255]
+    fear: [128, 0, 128]
+    happy: [0, 255, 0]
+    sad: [255, 0, 0]
+    surprise: [0, 255, 255]
+    neutral: [128, 128, 128]
+
+# Sauvegarde
+output:
+  save_video: false
+  output_video_path: "logs/output.mp4"
+  save_screenshots: false
+  screenshot_dir: "logs/screenshots"
+  fps: 30

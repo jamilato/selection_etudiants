@@ -1,0 +1,187 @@
+# Configuration d'entraînement
+# Basé sur les meilleures pratiques 2025 pour FER2013
+
+# Modèle
+model:
+  name: "emotionnet_nano"  # 'emotionnet_nano', 'resnet18', 'resnet34', 'efficientnet_b0'
+  num_classes: 7
+  pretrained: false  # Utiliser modèle pré-entraîné (pour ResNet, EfficientNet)
+  dropout: 0.2
+
+# Entraînement
+training:
+  epochs: 100
+  start_epoch: 0  # Pour resume
+
+  # Device
+  device: "cuda"  # 'cuda' ou 'cpu'
+  use_mixed_precision: true  # FP16 pour AMD 7900 XT
+
+  # Gradient
+  gradient_accumulation_steps: 1  # Augmenter si batch trop petit pour VRAM
+  max_grad_norm: 1.0  # Gradient clipping (null pour désactiver)
+
+  # Seed pour reproductibilité
+  random_seed: 42
+
+# Optimizer
+optimizer:
+  type: "adamw"  # 'adam', 'adamw', 'sgd'
+
+  # AdamW params
+  adamw:
+    lr: 0.001
+    betas: [0.9, 0.999]
+    weight_decay: 0.0001
+    eps: 1.0e-8
+
+  # Adam params
+  adam:
+    lr: 0.001
+    betas: [0.9, 0.999]
+    weight_decay: 0
+    eps: 1.0e-8
+
+  # SGD params (bonnes pratiques FER2013: momentum 0.9)
+  sgd:
+    lr: 0.1
+    momentum: 0.9
+    weight_decay: 0.0001
+    nesterov: true
+
+# Learning Rate Scheduler
+scheduler:
+  type: "reduce_on_plateau"  # 'reduce_on_plateau', 'cosine', 'step', 'exponential'
+
+  # ReduceLROnPlateau (recommandé)
+  reduce_on_plateau:
+    monitor: "val_loss"
+    mode: "min"
+    factor: 0.5  # Réduire LR de 50%
+    patience: 5
+    min_lr: 1.0e-6
+    verbose: true
+
+  # CosineAnnealingLR
+  cosine:
+    T_max: 50  # Redémarrer tous les 50 epochs
+    eta_min: 1.0e-6
+
+  # StepLR
+  step:
+    step_size: 30  # Réduire tous les 30 epochs
+    gamma: 0.1
+
+  # ExponentialLR
+  exponential:
+    gamma: 0.95
+
+# Loss function
+loss:
+  type: "cross_entropy"  # 'cross_entropy', 'focal_loss', 'label_smoothing'
+
+  # CrossEntropyLoss
+  cross_entropy:
+    weight: null  # Poids par classe (null = uniforme)
+    label_smoothing: 0.0  # 0.1 pour label smoothing
+
+  # Focal Loss (pour déséquilibre extrême)
+  focal_loss:
+    alpha: 1.0
+    gamma: 2.0
+
+# Callbacks
+callbacks:
+  # Early Stopping
+  early_stopping:
+    enabled: true
+    monitor: "val_loss"
+    patience: 15
+    mode: "min"
+    min_delta: 0.0001
+    verbose: true
+
+  # Model Checkpoint
+  model_checkpoint:
+    enabled: true
+    checkpoint_dir: "checkpoints"
+    monitor: "val_loss"
+    mode: "min"
+    save_best_only: true
+    save_weights_only: false
+    verbose: true
+
+  # TensorBoard
+  tensorboard:
+    enabled: true
+    log_dir: "logs/tensorboard"
+    comment: "emotionnet_fer2013"
+
+  # Learning Rate Logging
+  lr_logging:
+    enabled: true
+
+# Métriques à suivre
+metrics:
+  primary: "val_loss"  # Métrique principale pour early stopping
+  track:
+    - "train_loss"
+    - "train_acc"
+    - "val_loss"
+    - "val_acc"
+    - "val_f1"
+
+# Checkpointing
+checkpointing:
+  save_every_n_epochs: 10  # Sauvegarder tous les N epochs (0 = désactivé)
+  keep_last_n: 3  # Garder les N derniers checkpoints
+
+# Validation
+validation:
+  validate_every_n_epochs: 1  # Valider tous les N epochs
+  compute_confusion_matrix: true
+
+# Fine-tuning (Phase 2: RAF-DB)
+fine_tuning:
+  enabled: false
+  checkpoint_path: "checkpoints/best_model_val_loss.pt"
+
+  # Freeze layers
+  freeze_backbone: false
+  freeze_until_layer: null  # Nom de la couche
+
+  # Paramètres spécifiques
+  epochs: 30
+  lr: 0.0001  # LR plus petit pour fine-tuning
+
+# Export
+export:
+  # TorchScript (pour inférence optimisée)
+  to_torchscript: true
+  torchscript_path: "models/emotion_model_scripted.pt"
+
+  # ONNX (optionnel)
+  to_onnx: false
+  onnx_path: "models/emotion_model.onnx"
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  log_to_file: true
+  log_file: "logs/training.log"
+  print_freq: 10  # Afficher métriques tous les N batches
+
+# Performance
+performance:
+  # GPU settings
+  cudnn_benchmark: true  # Accélère CNN sur tailles fixes
+  cudnn_deterministic: false  # true pour reproductibilité exacte
+
+  # Memory
+  empty_cache_every_n_epochs: 5  # Vider cache GPU tous les N epochs
+
+# Debugging
+debug:
+  enabled: false
+  overfit_single_batch: false  # Tester overfit sur 1 batch
+  profile: false  # Profiler PyTorch

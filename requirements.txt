@@ -1,0 +1,66 @@
+# Projet IA - Système d'Identification d'Étudiants avec Analyse d'Émotions
+# Requirements pour AMD Radeon 7900 XT avec ROCm
+
+# Deep Learning Framework
+# Installation spéciale pour ROCm - voir README.md
+# torch>=2.0.0 (installer avec: pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.7)
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Computer Vision
+opencv-python>=4.8.0
+opencv-contrib-python>=4.8.0
+mtcnn>=0.1.1
+pillow>=10.0.0
+
+# Face Recognition
+deepface>=0.0.79
+# Backends pour DeepFace
+tensorflow>=2.13.0  # Optionnel si utilisation de certains modèles DeepFace
+retina-face>=0.0.13
+
+# Data Processing
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+
+# Progress bars
+tqdm>=4.65.0
+
+# Logging and Monitoring
+tensorboard>=2.13.0
+wandb>=0.15.0  # Optionnel pour tracking avancé
+
+# Configuration
+pyyaml>=6.0
+python-dotenv>=1.0.0
+
+# Utilities
+scipy>=1.11.0
+imutils>=0.5.4
+
+# Testing (optionnel)
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# API/Web (Phase 6 - optionnel)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+streamlit>=1.25.0
+python-multipart>=0.0.6
+
+# Database (optionnel)
+sqlalchemy>=2.0.0
+
+# GPU Monitoring
+gpustat>=1.1  # Peut ne pas fonctionner avec AMD, utiliser rocm-smi
+
+# Jupyter (pour développement)
+jupyter>=1.0.0
+ipykernel>=6.25.0
+notebook>=7.0.0

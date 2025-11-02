@@ -1,0 +1,98 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+venv_emotion/
+ENV/
+env/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Data (trop volumineux pour Git)
+data/fer2013/
+data/rafdb/
+data/students/
+data/*.zip
+data/*.tar.gz
+data/*.csv
+data/*.pkl
+
+# Modèles entraînés (trop volumineux)
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.pkl
+!models/.gitkeep
+
+# Logs
+logs/
+*.log
+runs/
+*.log.*
+
+# TensorBoard
+events.out.tfevents.*
+
+# Checkpoints
+checkpoints/
+*.ckpt
+
+# Output
+output/
+results/
+screenshots/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Environnement
+.env
+.env.local
+
+# ROCm / CUDA
+*.cubin
+*.fatbin
+*.ptx
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Archives
+*.zip
+*.tar.gz
+*.rar

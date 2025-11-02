@@ -1,0 +1,29 @@
+# Configuration WSL2 pour Projet IA
+# Copiez ce fichier vers: C:\Users\MNB\.wslconfig
+# Puis redémarrez WSL: wsl --shutdown
+
+[wsl2]
+# Mémoire allouée à WSL2 (recommandé: 50-75% de votre RAM totale)
+# Ajustez selon votre système (si vous avez 64GB RAM, mettez 32-48GB)
+memory=32GB
+
+# Processeurs alloués (recommandé: 75% de vos cores)
+processors=12
+
+# Activer le support GPU (nécessaire pour ROCm)
+# Disponible sur Windows 11 et Windows 10 build 21H2+
+nestedVirtualization=true
+
+# Swap (optionnel, utile pour entraînement de gros modèles)
+swap=16GB
+swapFile=C:\\Users\\MNB\\AppData\\Local\\Temp\\wsl-swap.vhdx
+
+# Localiser le host Windows depuis WSL
+localhostForwarding=true
+
+# NOTES IMPORTANTES:
+# 1. Après avoir copié ce fichier vers C:\Users\MNB\.wslconfig
+# 2. Redémarrez WSL depuis PowerShell: wsl --shutdown
+# 3. Relancez Ubuntu
+# 4. Vérifiez la RAM avec: free -h
+# 5. Vérifiez les CPUs avec: nproc

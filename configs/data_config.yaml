@@ -1,0 +1,124 @@
+# Configuration des données pour l'entraînement
+# Projet: Reconnaissance d'Émotions Faciales
+
+# Chemins des données
+data:
+  root_dir: "data"
+
+  # FER2013 dataset
+  fer2013:
+    path: "data/fer2013"
+    train_split: "train"
+    val_split: "val"
+    test_split: "test"
+    from_csv: false  # Si true, charge depuis CSV au lieu de dossiers
+    csv_path: null   # Chemin vers CSV si from_csv=true
+
+  # RAF-DB dataset (optionnel, pour fine-tuning)
+  rafdb:
+    path: "data/rafdb"
+    train_split: "train"
+    test_split: "test"
+    enabled: false  # Activer pour fine-tuning
+
+  # Custom student dataset (Phase 4)
+  students:
+    path: "data/students"
+    enabled: false
+
+# Paramètres de preprocessing
+preprocessing:
+  # Taille des images
+  img_size: [48, 48]  # [height, width] pour EmotionNet
+  # img_size: [224, 224]  # Décommenter pour ResNet/EfficientNet
+
+  # Mode de couleur
+  grayscale: true  # true pour EmotionNet, false pour ResNet
+
+  # Normalisation
+  normalization:
+    mean: [0.5]  # Pour grayscale
+    std: [0.5]
+    # Pour RGB, utiliser:
+    # mean: [0.485, 0.456, 0.406]  # ImageNet
+    # std: [0.229, 0.224, 0.225]
+
+# Augmentation de données (train uniquement)
+augmentation:
+  enabled: true
+
+  # Flip horizontal
+  horizontal_flip:
+    enabled: true
+    prob: 0.5
+
+  # Rotation
+  rotation:
+    enabled: true
+    degrees: 15  # ±15 degrés
+
+  # Color jitter (brightness, contrast)
+  color_jitter:
+    enabled: true
+    brightness: 0.2  # ±20%
+    contrast: 0.2    # ±20%
+    saturation: 0.1  # ±10% (seulement si RGB)
+    hue: 0.05        # ±5% (seulement si RGB)
+
+  # Affine transformation
+  affine:
+    enabled: true
+    degrees: 0
+    translate: [0.1, 0.1]  # ±10%
+    scale: [0.9, 1.1]      # 90-110%
+    shear: 5               # ±5 degrés
+
+  # Random erasing (simulate occlusions)
+  random_erasing:
+    enabled: true
+    prob: 0.1
+    scale: [0.02, 0.1]  # 2-10% de l'image
+    ratio: [0.3, 3.3]
+
+# DataLoader settings
+dataloader:
+  batch_size: 64
+  num_workers: 4  # Ajuster selon CPU (0 pour WSL2 si problèmes)
+  pin_memory: true  # true si GPU disponible
+  persistent_workers: true  # Garde workers en vie entre epochs
+  prefetch_factor: 2  # Nombre de batches à précharger
+
+  # Class balancing
+  use_weighted_sampler: true  # Utiliser WeightedRandomSampler pour déséquilibre
+
+# Train/Val split (si pas de val folder existant)
+split:
+  val_ratio: 0.15  # 15% pour validation
+  test_ratio: 0.15  # 15% pour test (si pas de test folder)
+  random_seed: 42   # Pour reproductibilité
+
+# Cache options
+cache:
+  enabled: false  # Mettre en cache les images (consomme RAM)
+
+# Classes d'émotions
+emotions:
+  classes: 7
+  labels:
+    - "angry"
+    - "disgust"
+    - "fear"
+    - "happy"
+    - "sad"
+    - "surprise"
+    - "neutral"
+
+  # Indices
+  label_to_idx:
+    angry: 0
+    disgust: 1
+    fear: 2
+    happy: 3
+    sad: 4
+    surprise: 5
+    neutral: 6
