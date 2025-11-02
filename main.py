@@ -8,17 +8,14 @@ import sys
 import cv2
 import torch
 import yaml
+import logging
 from pathlib import Path
 
 # Ajouter le répertoire src au path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-
-def load_config(config_path):
-    """Charge la configuration depuis un fichier YAML"""
-    with open(config_path, 'r') as f:
-        config = yaml.safe_load(f)
-    return config
+from src.utils.config import load_config
+from src.core.system import create_system_from_config
 
 
 def check_gpu():
@@ -37,94 +34,118 @@ def main_realtime(config):
     """Mode temps réel avec webcam"""
     print("\n🎥 Démarrage du mode temps réel...")
 
-    # TODO: Implémenter le système complet
-    # Pour l'instant, juste un test de webcam
+    try:
+        # Créer le système complet
+        print("   Initialisation du système...")
+        system = create_system_from_config(config)
 
-    cap = cv2.VideoCapture(0)
+        print("✅ Système initialisé avec succès")
+        print(f"   - Détecteur: {config['face_detection']['method']}")
+        print(f"   - Modèle: {config['emotion_model']['architecture']}")
+        print(f"   - Device: {config['device']['type']}")
+        print()
+        print("Contrôles:")
+        print("  - 'q': Quitter")
+        print("  - 's': Prendre une capture d'écran")
+        print("  - 'p': Pause/Resume")
+        print()
 
-    if not cap.isOpened():
-        print("❌ Erreur: Impossible d'ouvrir la webcam")
+        # Lancer la webcam
+        system.run_webcam(camera_id=0)
+
+    except Exception as e:
+        print(f"❌ Erreur lors de l'initialisation du système: {e}")
+        import traceback
+        traceback.print_exc()
         return
 
-    print("✅ Webcam détectée")
-    print("Appuyez sur 'q' pour quitter")
-
-    fps_target = config['realtime']['fps_target']
-    show_fps = config['realtime']['show_fps']
-
-    import time
-    prev_time = time.time()
-    fps = 0
-
-    while True:
-        ret, frame = cap.read()
-
-        if not ret:
-            print("❌ Erreur de lecture de la frame")
-            break
-
-        # Calculer FPS
-        if show_fps:
-            curr_time = time.time()
-            fps = 1 / (curr_time - prev_time) if (curr_time - prev_time) > 0 else 0
-            prev_time = curr_time
-
-            # Afficher FPS
-            cv2.putText(frame, f"FPS: {fps:.2f}", (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-
-        # Afficher instructions
-        cv2.putText(frame, "Appuyez sur 'q' pour quitter", (10, frame.shape[0] - 20),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-
-        cv2.imshow(config['visualization']['window_name'], frame)
-
-        # Quitter avec 'q'
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
     print("\n✅ Mode temps réel terminé")
 
 
-def main_video(config, video_path):
+def main_video(config, video_path, output_path=None):
     """Mode traitement vidéo"""
     print(f"\n🎬 Traitement de la vidéo: {video_path}")
 
-    cap = cv2.VideoCapture(video_path)
-
-    if not cap.isOpened():
-        print(f"❌ Erreur: Impossible d'ouvrir la vidéo {video_path}")
+    if not Path(video_path).exists():
+        print(f"❌ Erreur: Fichier introuvable {video_path}")
         return
 
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
+    try:
+        # Créer le système
+        print("   Initialisation du système...")
+        system = create_system_from_config(config)
 
-    print(f"   Total frames: {total_frames}")
-    print(f"   FPS: {fps:.2f}")
+        print("✅ Système initialisé")
 
-    # TODO: Implémenter le traitement vidéo complet
+        # Traiter la vidéo
+        system.process_video(
+            video_path=video_path,
+            output_path=output_path,
+            show_window=True
+        )
 
-    cap.release()
+    except Exception as e:
+        print(f"❌ Erreur lors du traitement: {e}")
+        import traceback
+        traceback.print_exc()
+        return
+
     print("✅ Traitement vidéo terminé")
 
 
-def main_image(config, image_path):
+def main_image(config, image_path, output_path=None):
     """Mode image unique"""
     print(f"\n🖼️  Traitement de l'image: {image_path}")
 
-    image = cv2.imread(image_path)
-
-    if image is None:
-        print(f"❌ Erreur: Impossible de lire l'image {image_path}")
+    if not Path(image_path).exists():
+        print(f"❌ Erreur: Fichier introuvable {image_path}")
         return
 
-    print(f"   Dimensions: {image.shape}")
+    try:
+        # Créer le système
+        print("   Initialisation du système...")
+        system = create_system_from_config(config)
 
-    # TODO: Implémenter le traitement d'image complet
+        print("✅ Système initialisé")
 
-    print("✅ Traitement image terminé")
+        # Traiter l'image
+        results = system.process_image(
+            image_path=image_path,
+            output_path=output_path
+        )
+
+        # Afficher les résultats
+        print(f"\n📊 Résultats de l'analyse:")
+        print(f"   Visages détectés: {len(results)}")
+
+        for i, result in enumerate(results, 1):
+            print(f"\n   Visage #{i}:")
+            if 'student_name' in result:
+                print(f"     - Étudiant: {result['student_name']}")
+                if result.get('student_similarity'):
+                    print(f"     - Similarité: {result['student_similarity']:.2f}")
+            print(f"     - Émotion: {result['emotion']}")
+            print(f"     - Confiance: {result['emotion_confidence']:.2f}")
+            print(f"     - Position: {result['bbox']}")
+
+        if output_path:
+            print(f"\n✅ Image annotée sauvegardée: {output_path}")
+
+        # Afficher l'image annotée
+        if output_path and Path(output_path).exists():
+            print("\nAppuyez sur une touche pour fermer l'image...")
+            img = cv2.imread(output_path)
+            cv2.imshow("Résultat", img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+    except Exception as e:
+        print(f"❌ Erreur lors du traitement: {e}")
+        import traceback
+        traceback.print_exc()
+        return
+
+    print("\n✅ Traitement image terminé")
 
 
 def main():
@@ -209,6 +230,16 @@ Exemples d'utilisation:
     print("  Version 1.0.0")
     print("=" * 70)
 
+    # Configuration du logging
+    log_level = logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+
     # Charger configuration
     try:
         config = load_config(args.config)
@@ -247,13 +278,20 @@ Exemples d'utilisation:
             if not args.input:
                 print("❌ Erreur: --input requis pour le mode video")
                 sys.exit(1)
-            main_video(config, args.input)
+            main_video(config, args.input, output_path=args.save_output)
 
         elif args.mode == 'image':
             if not args.input:
                 print("❌ Erreur: --input requis pour le mode image")
                 sys.exit(1)
-            main_image(config, args.input)
+
+            # Générer un chemin de sortie automatique si non spécifié
+            output_path = args.save_output
+            if output_path is None:
+                input_path = Path(args.input)
+                output_path = str(input_path.parent / f"{input_path.stem}_annotated{input_path.suffix}")
+
+            main_image(config, args.input, output_path=output_path)
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Interruption utilisateur")
